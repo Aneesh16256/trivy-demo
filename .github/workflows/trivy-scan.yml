@@ -1,4 +1,4 @@
-name: Container Security Scan
+name: Trivy Container Scan
 
 on:
   push:
@@ -7,26 +7,20 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-scan:
+  scan:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4  # ← REQUIRED "uses" key
 
-      - name: Build Docker image (multi-stage)
-        run: docker build -t trivy-demo:${{ github.sha }} .
+      - name: Build Docker image
+        run: docker build -t my-app:${{ github.sha }} .  # ← REQUIRED "run" key
 
-      - name: Scan final image with Trivy
-        uses: aquasecurity/trivy-action@master
+      - name: Scan with Trivy
+        uses: aquasecurity/trivy-action@master  # ← REQUIRED "uses" key
         with:
-          image-ref: 'trivy-demo:${{ github.sha }}'
-          format: 'sarif'
+          image-ref: 'my-app:${{ github.sha }}'
+          format: 'table'
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
           ignore-unfixed: true
-          output: 'trivy-results.sarif'
-          scanners: 'vuln'  # Focus only on vulnerabilities
-
-      # Optional: Scan the builder stage for development dependencies
-      - name: Scan builder stage (optional)
-        if: ${{ always() }}  # Run even if previous
